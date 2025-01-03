@@ -117,18 +117,18 @@ function checkBox(x, y) {
     return true;
 }
 
-function findEmptyCell() {
-    for (let y = 0; y < 9; y++) {
-        for (let x = 0; x < 9; x++) {
-            const value = getValue(x, y);
-            console.log(`Is empty ${x}, ${y}? v=${value}`);
-            if (!value) {
-                return { x, y };
-            }
-        }
-    }
+function findNextCell(options) {
+    let nextCell = null;
+    let minOptions = Infinity;
 
-    return null;
+    options.forEach((cellOptions, cell) => {
+        if (cellOptions.length < minOptions) {
+            nextCell = cell;
+            minOptions = cellOptions.length;
+        }
+    });
+
+    return nextCell;
 }
 
 function filterOptionsRow(options, y) {
@@ -170,39 +170,105 @@ function getCellOptions(x, y) {
     filterOptionsRow(options, y);
     filterOptionsBox(options, x, y);
     
-    return options;
+    const values = [];
+
+    for (let value = 1; value <= 9; value++) {
+        if (options[value - 1]) {
+            values.push(value);
+        }
+    }
+
+    return values;
 }
 
-async function solveStep() {
-    const nextCell = findEmptyCell();
+function updateOptions(options, x, y, value) {
+    const changes = [];
+    let cell;
+    for (let i = 0; i < 9; i++) {
+        cell = { i, y };
+        if (options.has(cell) && options.get(cell).includes(value)) {
+            const index = options.get(cell).findIndex(value);
+            options.get(cell).splice(index, 1);
+            changes.push(cell);
+        }
 
-    if (!nextCell) {
+        cell = { x, i };
+        if (options.has(cell) && options.get(cell).includes(value)) {
+            const index = options.get(cell).findIndex(value);
+            options.get(cell).splice(index, 1);
+            changes.push(cell);
+        }
+    }
+
+    const boxX = Math.floor(x / 3);
+    const boxY = Math.floor(y / 3);
+
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            const xi = 3 * boxX + i;
+            const yj = 3 * boxY + j;
+
+            cell = { xi, yj };
+            if (options.has(cell) && options.get(cell).includes(value)) {
+                const index = options.get(cell).findIndex(value);
+                options.get(cell).splice(index, 1);
+                changes.push(cell);
+            }
+        }
+    }
+
+    return changes;
+}
+
+async function solveStep(options) {
+    const cell = findNextCell(options);
+
+    if (!cell) {
         return true;
     }
 
-    const { x, y } = nextCell;
+    const { x, y } = cell;
 
     console.log(`solving for ${x}, ${y}`);
 
-    for (let value = 1; value <= 9; value++) {
+    const cellOptions = options.get(cell);
+    options.delete(cell);
+
+    for (const value of cellOptions) {
         console.log(`try ${x}, ${y}: ${value}`);
         setValue(x, y, value);
+        const changes = updateOptions(options, x, y, value);
         await new Promise(resolve => setTimeout(resolve, 10));
         
-        if (checkColumn(x) && checkRow(y) && checkBox(x, y) && await solveStep()) {
+        if (checkColumn(x) && checkRow(y) && checkBox(x, y) && await solveStep(options)) {
             return true;
         }
 
         setValue(x, y, '');
+        changes.forEach((removedCell) => options.get(removedCell).push(value));
         await new Promise(resolve => setTimeout(resolve, 10));
     }
 
     console.log(`No value for ${x}, ${y}`);
+    options.set(cell, cellOptions)
     return false;
 }
 
 function solveSudoku() {
-    solveStep();
+    const options = new Map();
+
+    for (let y = 0; y < 9; y++) {
+        for (let x = 0; x < 9; x++) {
+            if (getValue(x, y)) continue;
+
+            const cellOptions = getCellOptions(x, y);
+            options.set({ x, y }, cellOptions);
+        }
+    }
+
+    console.log(options);
+
+    solveStep(options);
 }
 
 document.getElementById('solve').addEventListener('click', solveSudoku);
