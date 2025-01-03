@@ -1,3 +1,7 @@
+/**
+ * Create the HTML elements for the sudoku.
+ * @returns {Array<HTMLElement>} 1D array with the cells, row by row.
+ */
 function initSudoku() {
     const sudokuElem = document.getElementById('sudoku');
     let boxId = 0;
@@ -28,19 +32,41 @@ function initSudoku() {
 
 const sudoku = initSudoku();
 
+/**
+ * Get the cell at the given coordinates.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @returns {HTMLElement} HTMLElement of the cell.
+ */
 function getCell(x, y) {
     return sudoku[9 * y + x];
 }
 
+/**
+ * Get the value of the given cell. If the cell is empty, return null.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @returns {number | null}
+ */
 function getValue(x, y) {
     const value = sudoku[9 * y + x].innerText;
-    return isNaN(value) ? null : parseInt(value);
+    return isNaN(value) ? null : parseInt(value, 10);
 }
 
+/**
+ * Set the value of the given cell.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @param {number | string} value 
+ */
 function setValue(x, y, value) {
     sudoku[9 * y + x].innerText = value;
 }
 
+/**
+ * Read the given file and parse it into the sudoku.
+ * @param {Event} event Change event
+ */
 function loadSudoku(event) {
     const file = event.target.files[0];
     if (file) {
@@ -62,12 +88,17 @@ function loadSudoku(event) {
 
         document.getElementById('solve').removeAttribute('disabled');
     } else {
-        console.log("No file selected");
+        console.error("No file selected");
     }
 }
 
 document.getElementById('load').addEventListener('change', loadSudoku);
 
+/**
+ * Check if the row at the given y-coordinate is correct.
+ * @param {number} y Row index
+ * @returns {boolean}
+ */
 function checkRow(y) {
     const checkedValues = new Array(9).fill(false);
 
@@ -83,6 +114,11 @@ function checkRow(y) {
     return true;
 }
 
+/**
+ * Check if the column at the given x-coordinate is correct.
+ * @param {number} x Column index
+ * @returns {boolean}
+ */
 function checkColumn(x) {
     const checkedValues = new Array(9).fill(false);
 
@@ -98,6 +134,12 @@ function checkColumn(x) {
     return true;
 }
 
+/**
+ * Check if the box that the coordinate is in is correct.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @returns {boolean}
+ */
 function checkBox(x, y) {
     const boxX = Math.floor(x / 3);
     const boxY = Math.floor(y / 3);
@@ -117,6 +159,12 @@ function checkBox(x, y) {
     return true;
 }
 
+/**
+ * Find the next cell to process. This is the cell with the least
+ * amount of options. Return null if there are no more cells to fill.
+ * @param {Map<{ x: number, y: number }, Array<number>>} options 
+ * @returns {{ x: number, y: number } | null} 
+ */
 function findNextCell(options) {
     let nextCell = null;
     let minOptions = Infinity;
@@ -131,38 +179,12 @@ function findNextCell(options) {
     return nextCell;
 }
 
-function filterOptionsRow(options, y) {
-    for (let x = 0; x < 9; x++) {
-        const value = getValue(x, y);
-        if (value) {
-            options[value - 1] = false;
-        }
-    }
-}
-
-function filterOptionsColumn(options, x) {
-    for (let y = 0; y < 9; y++) {
-        const value = getValue(x, y);
-        if (value) {
-            options[value - 1] = false;
-        }
-    }
-}
-
-function filterOptionsBox(options, x, y) {
-    const boxX = Math.floor(x / 3);
-    const boxY = Math.floor(y / 3);
-
-    for (let i = 0; i < 3; i++) {
-        for (let j = 0; j < 3; j++) {
-            const value = getValue(3 * boxX + i, 3 * boxY + j);
-            if (value) {
-                options[value - 1] = false;
-            }
-        }
-    }
-}
-
+/**
+ * Get the optional values of the given cell.
+ * @param {number} x 
+ * @param {number} y 
+ * @returns {Array<number>} Optional values.
+ */
 function getCellOptions(x, y) {
     const options = new Array(9).fill(true);
 
@@ -181,25 +203,89 @@ function getCellOptions(x, y) {
     return values;
 }
 
-function updateOptions(options, x, y, value) {
+/**
+ * Filter the cell options based the row.
+ * @param {Array<boolean>} cellOptions Array of length 9, where each value is stored
+ * at index (value - 1).
+ * @param {number} y Row index
+ */
+function filterOptionsRow(cellOptions, y) {
+    for (let x = 0; x < 9; x++) {
+        const value = getValue(x, y);
+        if (value) {
+            cellOptions[value - 1] = false;
+        }
+    }
+}
+
+/**
+ * Filter the cell options based the column.
+ * @param {Array<boolean>} cellOptions Array of length 9, where each value is stored
+ * at index (value - 1).
+ * @param {number} x Column index
+ */
+function filterOptionsColumn(options, x) {
+    for (let y = 0; y < 9; y++) {
+        const value = getValue(x, y);
+        if (value) {
+            options[value - 1] = false;
+        }
+    }
+}
+
+/**
+ * Filter the cell options based the box.
+ * @param {Array<boolean>} cellOptions Array of length 9, where each value
+ * is stored at index (value - 1).
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ */
+function filterOptionsBox(options, x, y) {
+    const boxX = Math.floor(x / 3);
+    const boxY = Math.floor(y / 3);
+
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            const value = getValue(3 * boxX + i, 3 * boxY + j);
+            if (value) {
+                options[value - 1] = false;
+            }
+        }
+    }
+}
+
+/**
+ * Update the cell options by removing the value from the cell options
+ * in the row, column and box. Return a list of all the cells where
+ * the option is removed from, so the change can be undone.
+ * @param {Map<{ x: number, y: number }, Array<number>>} cellOptions 
+ * @param {number} x X-coordinate of the filled-in cell.
+ * @param {number} y Y-coordinate of the filled-in cell.
+ * @param {number} value Value that has been filled in.
+ * @returns {Array<string>} List of cell keys which options have been altered.
+ */
+function updateOptions(cellOptions, x, y, value) {
     const changes = [];
     let cell;
     for (let i = 0; i < 9; i++) {
-        cell = { i, y };
-        if (options.has(cell) && options.get(cell).includes(value)) {
-            const index = options.get(cell).findIndex(value);
-            options.get(cell).splice(index, 1);
+        // Check for each cell in the row
+        cell = `x: ${i}, y: ${y}`;
+        if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
+            const index = cellOptions.get(cell).findIndex(v => v === value);
+            cellOptions.get(cell).splice(index, 1);
             changes.push(cell);
         }
 
-        cell = { x, i };
-        if (options.has(cell) && options.get(cell).includes(value)) {
-            const index = options.get(cell).findIndex(value);
-            options.get(cell).splice(index, 1);
+        // Check for each cell in the column
+        cell = `x: ${x}, y: ${i}`;
+        if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
+            const index = cellOptions.get(cell).findIndex(v => v === value);
+            cellOptions.get(cell).splice(index, 1);
             changes.push(cell);
         }
     }
 
+    // Check for all cells in the box
     const boxX = Math.floor(x / 3);
     const boxY = Math.floor(y / 3);
 
@@ -208,10 +294,10 @@ function updateOptions(options, x, y, value) {
             const xi = 3 * boxX + i;
             const yj = 3 * boxY + j;
 
-            cell = { xi, yj };
-            if (options.has(cell) && options.get(cell).includes(value)) {
-                const index = options.get(cell).findIndex(value);
-                options.get(cell).splice(index, 1);
+            cell = `x: ${xi}, y: ${yj}`;
+            if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
+                const index = cellOptions.get(cell).findIndex(v => v === value);
+                cellOptions.get(cell).splice(index, 1);
                 changes.push(cell);
             }
         }
@@ -220,55 +306,70 @@ function updateOptions(options, x, y, value) {
     return changes;
 }
 
-async function solveStep(options) {
-    const cell = findNextCell(options);
+/**
+ * Solve the sudoku recursively. At each step, get the next cell to fill in
+ * and try all possible values. Check if the next step succeeds as well. If
+ * so, the sudoku is complete. If not, set the cell as empty and go back a step.
+ * @param {Map<{ x: number, y: number }, Array<number>>} cellOptions 
+ * @returns {boolean} ```true``` if the sudoku is correct, otherwise ```false```.
+ */
+async function solveStep(cellOptions) {
+    const cellKey = findNextCell(cellOptions);
 
-    if (!cell) {
+    if (!cellKey) {
+        // No empty cells, the sudoku is complete
         return true;
     }
 
-    const { x, y } = cell;
+    // Ugly bit, we need to parse the cell key
+    const [xPart, yPart] = cellKey.split(', ');
+    const x = parseInt(xPart.split(': ')[1], 10);
+    const y = parseInt(yPart.split(': ')[1], 10);
 
-    console.log(`solving for ${x}, ${y}`);
+    // Remove the cell options from the Map
+    const options = cellOptions.get(cellKey);
+    cellOptions.delete(cellKey);
 
-    const cellOptions = options.get(cell);
-    options.delete(cell);
-
-    for (const value of cellOptions) {
-        console.log(`try ${x}, ${y}: ${value}`);
+    for (const value of options) {
         setValue(x, y, value);
-        const changes = updateOptions(options, x, y, value);
+        const changes = updateOptions(cellOptions, x, y, value);
+        // Set an await, so the DOM can update.
         await new Promise(resolve => setTimeout(resolve, 10));
         
-        if (checkColumn(x) && checkRow(y) && checkBox(x, y) && await solveStep(options)) {
+        if (await solveStep(cellOptions)) {
             return true;
         }
-
+        
+        // Reset the value of the cell.
         setValue(x, y, '');
-        changes.forEach((removedCell) => options.get(removedCell).push(value));
+        // Set back the option for each cell where the option was removed.
+        changes.forEach((removedCell) => cellOptions.get(removedCell).push(value));
         await new Promise(resolve => setTimeout(resolve, 10));
     }
 
-    console.log(`No value for ${x}, ${y}`);
-    options.set(cell, cellOptions)
+    // Set the cell options back in the Map
+    cellOptions.set(cellKey, options)
     return false;
 }
 
+/**
+ * Solve the sudoku.
+ */
 function solveSudoku() {
-    const options = new Map();
+    document.getElementById('solve').setAttribute('disabled', true);
+
+    const cellOptions = new Map();
 
     for (let y = 0; y < 9; y++) {
         for (let x = 0; x < 9; x++) {
             if (getValue(x, y)) continue;
 
-            const cellOptions = getCellOptions(x, y);
-            options.set({ x, y }, cellOptions);
+            const options = getCellOptions(x, y);
+            cellOptions.set((`x: ${x}, y: ${y}`), options);
         }
     }
 
-    console.log(options);
-
-    solveStep(options);
+    solveStep(cellOptions);
 }
 
 document.getElementById('solve').addEventListener('click', solveSudoku);
