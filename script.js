@@ -162,8 +162,8 @@ function checkBox(x, y) {
 /**
  * Find the next cell to process. This is the cell with the least
  * amount of options. Return null if there are no more cells to fill.
- * @param {Map<{ x: number, y: number }, Array<number>>} options 
- * @returns {{ x: number, y: number } | null} 
+ * @param {Map<number, Array<number>>} options 
+ * @returns {number | null} The cell key: 9 * y + x 
  */
 function findNextCell(options) {
     let nextCell = null;
@@ -258,7 +258,7 @@ function filterOptionsBox(options, x, y) {
  * Update the cell options by removing the value from the cell options
  * in the row, column and box. Return a list of all the cells where
  * the option is removed from, so the change can be undone.
- * @param {Map<{ x: number, y: number }, Array<number>>} cellOptions 
+ * @param {Map<number, Array<number>>} cellOptions 
  * @param {number} x X-coordinate of the filled-in cell.
  * @param {number} y Y-coordinate of the filled-in cell.
  * @param {number} value Value that has been filled in.
@@ -269,7 +269,7 @@ function updateOptions(cellOptions, x, y, value) {
     let cell;
     for (let i = 0; i < 9; i++) {
         // Check for each cell in the row
-        cell = `x: ${i}, y: ${y}`;
+        cell = 9 * y + i;
         if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
             const index = cellOptions.get(cell).findIndex(v => v === value);
             cellOptions.get(cell).splice(index, 1);
@@ -277,7 +277,7 @@ function updateOptions(cellOptions, x, y, value) {
         }
 
         // Check for each cell in the column
-        cell = `x: ${x}, y: ${i}`;
+        cell = 9 * i + x;
         if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
             const index = cellOptions.get(cell).findIndex(v => v === value);
             cellOptions.get(cell).splice(index, 1);
@@ -294,7 +294,7 @@ function updateOptions(cellOptions, x, y, value) {
             const xi = 3 * boxX + i;
             const yj = 3 * boxY + j;
 
-            cell = `x: ${xi}, y: ${yj}`;
+            cell = 9 * yj + xi;
             if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
                 const index = cellOptions.get(cell).findIndex(v => v === value);
                 cellOptions.get(cell).splice(index, 1);
@@ -310,7 +310,7 @@ function updateOptions(cellOptions, x, y, value) {
  * Solve the sudoku recursively. At each step, get the next cell to fill in
  * and try all possible values. Check if the next step succeeds as well. If
  * so, the sudoku is complete. If not, set the cell as empty and go back a step.
- * @param {Map<{ x: number, y: number }, Array<number>>} cellOptions 
+ * @param {Map<number, Array<number>>} cellOptions 
  * @returns {boolean} ```true``` if the sudoku is correct, otherwise ```false```.
  */
 async function solveStep(cellOptions) {
@@ -321,10 +321,8 @@ async function solveStep(cellOptions) {
         return true;
     }
 
-    // Ugly bit, we need to parse the cell key
-    const [xPart, yPart] = cellKey.split(', ');
-    const x = parseInt(xPart.split(': ')[1], 10);
-    const y = parseInt(yPart.split(': ')[1], 10);
+    const x = cellKey % 9;
+    const y = Math.floor(cellKey / 9);
 
     // Remove the cell options from the Map
     const options = cellOptions.get(cellKey);
@@ -335,17 +333,18 @@ async function solveStep(cellOptions) {
         const changes = updateOptions(cellOptions, x, y, value);
         // Set an await, so the DOM can update.
         await new Promise(resolve => setTimeout(resolve, 10));
-        
+
         if (await solveStep(cellOptions)) {
             return true;
         }
         
-        // Reset the value of the cell.
-        setValue(x, y, '');
         // Set back the option for each cell where the option was removed.
         changes.forEach((removedCell) => cellOptions.get(removedCell).push(value));
-        await new Promise(resolve => setTimeout(resolve, 10));
     }
+
+    // All options incorrect. Reset the value of the cell.
+    setValue(x, y, '');
+    await new Promise(resolve => setTimeout(resolve, 10));
 
     // Set the cell options back in the Map
     cellOptions.set(cellKey, options)
@@ -365,7 +364,7 @@ function solveSudoku() {
             if (getValue(x, y)) continue;
 
             const options = getCellOptions(x, y);
-            cellOptions.set((`x: ${x}, y: ${y}`), options);
+            cellOptions.set(9 * y + x, options);
         }
     }
 
