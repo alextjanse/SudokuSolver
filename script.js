@@ -26,6 +26,7 @@ for (let boxY = 0; boxY < 3; boxY++) {
 // Load sudoku
 document.getElementById('load').addEventListener('change', function(event) {
     clearSudoku();
+    clearResult();
 
     const file = event.target.files[0];
     if (file) {
