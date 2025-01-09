@@ -384,7 +384,7 @@ function showResult(succeeded) {
 function clearResult() {
     const resultElem = document.getElementById('result');
     resultElem.classList.remove('correct', 'incorrect');
-    resultElem.style.display = 'none;'
+    resultElem.style.display = 'none';
 }
 
 // Add start function to click event
