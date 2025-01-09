@@ -1,73 +1,32 @@
-/**
- * Create the HTML elements for the sudoku.
- * @returns {Array<HTMLElement>} 1D array with the cells, row by row.
- */
-function initSudoku() {
-    const sudokuElem = document.getElementById('sudoku');
-    let boxId = 0;
-    let cellId = 0;
+// Initialise the sudoku
+const sudokuElem = document.getElementById('sudoku');
+let boxId = 0;
+let cellId = 0;
 
-    const cells = new Array(81);
+const cells = new Array(81);
 
-    for (let boxY = 0; boxY < 3; boxY++) {
-        for (let boxx = 0; boxx < 3; boxx++) {
-            const boxElem = document.createElement('div');
-            boxElem.id = `box ${boxId++}`;
-            boxElem.classList.add('box');
-            sudokuElem.appendChild(boxElem);
-            for (let y = 0; y < 3; y++) {
-                for (let x = 0; x < 3; x++) {
-                    const cellElem = document.createElement('div');
-                    cellElem.id = `cell ${cellId++}`;
-                    cellElem.classList.add('cell');
-                    boxElem.appendChild(cellElem);
-                    cells[9 * (3 * boxY + y) + 3 * boxx + x] = cellElem;
-                }
+for (let boxY = 0; boxY < 3; boxY++) {
+    for (let boxx = 0; boxx < 3; boxx++) {
+        const boxElem = document.createElement('div');
+        boxElem.id = `box ${boxId++}`;
+        boxElem.classList.add('box');
+        sudokuElem.appendChild(boxElem);
+        for (let y = 0; y < 3; y++) {
+            for (let x = 0; x < 3; x++) {
+                const cellElem = document.createElement('div');
+                cellElem.id = `cell ${cellId++}`;
+                cellElem.classList.add('cell');
+                boxElem.appendChild(cellElem);
+                cells[9 * (3 * boxY + y) + 3 * boxx + x] = cellElem;
             }
         }
     }
-
-    return cells;
 }
 
-const sudoku = initSudoku();
+// Load sudoku
+document.getElementById('load').addEventListener('change', function(event) {
+    clearSudoku();
 
-/**
- * Get the cell at the given coordinates.
- * @param {number} x X-coordinate of the cell.
- * @param {number} y Y-coordinate of the cell.
- * @returns {HTMLElement} HTMLElement of the cell.
- */
-function getCell(x, y) {
-    return sudoku[9 * y + x];
-}
-
-/**
- * Get the value of the given cell. If the cell is empty, return null.
- * @param {number} x X-coordinate of the cell.
- * @param {number} y Y-coordinate of the cell.
- * @returns {number | null}
- */
-function getValue(x, y) {
-    const value = sudoku[9 * y + x].innerText;
-    return isNaN(value) ? null : parseInt(value, 10);
-}
-
-/**
- * Set the value of the given cell.
- * @param {number} x X-coordinate of the cell.
- * @param {number} y Y-coordinate of the cell.
- * @param {number | string} value 
- */
-function setValue(x, y, value) {
-    sudoku[9 * y + x].innerText = value;
-}
-
-/**
- * Read the given file and parse it into the sudoku.
- * @param {Event} event Change event
- */
-function loadSudoku(event) {
     const file = event.target.files[0];
     if (file) {
         const fr = new FileReader();
@@ -86,13 +45,52 @@ function loadSudoku(event) {
         
         fr.readAsText(file);
 
-        document.getElementById('solve').removeAttribute('disabled');
+        document.getElementById('solve').toggleAttribute('disabled', false);
     } else {
         console.error("No file selected");
     }
+});
+
+/**
+ * Clear the sudoku.
+ */
+function clearSudoku() {
+    cells.forEach(cell => {
+        cell.innerText = '';
+        cell.classList.remove('given');
+    });
 }
 
-document.getElementById('load').addEventListener('change', loadSudoku);
+/**
+ * Get the cell at the given coordinates.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @returns {HTMLElement} HTMLElement of the cell.
+ */
+function getCell(x, y) {
+    return cells[9 * y + x];
+}
+
+/**
+ * Get the value of the given cell. If the cell is empty, return null.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @returns {number | null}
+ */
+function getValue(x, y) {
+    const value = cells[9 * y + x].innerText;
+    return isNaN(value) ? null : parseInt(value, 10);
+}
+
+/**
+ * Set the value of the given cell.
+ * @param {number} x X-coordinate of the cell.
+ * @param {number} y Y-coordinate of the cell.
+ * @param {number | string} value 
+ */
+function setValue(x, y, value) {
+    cells[9 * y + x].innerText = value;
+}
 
 /**
  * Check if the row at the given y-coordinate is correct.
@@ -266,22 +264,22 @@ function filterOptionsBox(options, x, y) {
  */
 function updateOptions(cellOptions, x, y, value) {
     const changes = [];
-    let cell;
+    let cellKey;
     for (let i = 0; i < 9; i++) {
         // Check for each cell in the row
-        cell = 9 * y + i;
-        if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
-            const index = cellOptions.get(cell).findIndex(v => v === value);
-            cellOptions.get(cell).splice(index, 1);
-            changes.push(cell);
+        cellKey = 9 * y + i;
+        if (cellOptions.has(cellKey) && cellOptions.get(cellKey).includes(value)) {
+            const index = cellOptions.get(cellKey).findIndex(v => v === value);
+            cellOptions.get(cellKey).splice(index, 1);
+            changes.push(cellKey);
         }
 
         // Check for each cell in the column
-        cell = 9 * i + x;
-        if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
-            const index = cellOptions.get(cell).findIndex(v => v === value);
-            cellOptions.get(cell).splice(index, 1);
-            changes.push(cell);
+        cellKey = 9 * i + x;
+        if (cellOptions.has(cellKey) && cellOptions.get(cellKey).includes(value)) {
+            const index = cellOptions.get(cellKey).findIndex(v => v === value);
+            cellOptions.get(cellKey).splice(index, 1);
+            changes.push(cellKey);
         }
     }
 
@@ -294,11 +292,11 @@ function updateOptions(cellOptions, x, y, value) {
             const xi = 3 * boxX + i;
             const yj = 3 * boxY + j;
 
-            cell = 9 * yj + xi;
-            if (cellOptions.has(cell) && cellOptions.get(cell).includes(value)) {
-                const index = cellOptions.get(cell).findIndex(v => v === value);
-                cellOptions.get(cell).splice(index, 1);
-                changes.push(cell);
+            cellKey = 9 * yj + xi;
+            if (cellOptions.has(cellKey) && cellOptions.get(cellKey).includes(value)) {
+                const index = cellOptions.get(cellKey).findIndex(v => v === value);
+                cellOptions.get(cellKey).splice(index, 1);
+                changes.push(cellKey);
             }
         }
     }
@@ -311,7 +309,7 @@ function updateOptions(cellOptions, x, y, value) {
  * and try all possible values. Check if the next step succeeds as well. If
  * so, the sudoku is complete. If not, set the cell as empty and go back a step.
  * @param {Map<number, Array<number>>} cellOptions 
- * @returns {boolean} ```true``` if the sudoku is correct, otherwise ```false```.
+ * @returns {Promise<boolean>} ```true``` if the sudoku is correct, otherwise ```false```.
  */
 async function solveStep(cellOptions) {
     const cellKey = findNextCell(cellOptions);
@@ -352,11 +350,11 @@ async function solveStep(cellOptions) {
 }
 
 /**
- * Solve the sudoku.
+ * Get the cell options of all the cells and put them into a Map, where
+ * the key is cell index in cells.
+ * @returns {Map<number, Array<number>>}
  */
-function solveSudoku() {
-    document.getElementById('solve').setAttribute('disabled', true);
-
+function getAllCellOptions() {
     const cellOptions = new Map();
 
     for (let y = 0; y < 9; y++) {
@@ -368,7 +366,30 @@ function solveSudoku() {
         }
     }
 
-    solveStep(cellOptions);
+    return cellOptions;
 }
 
-document.getElementById('solve').addEventListener('click', solveSudoku);
+/**
+ * Display the result.
+ * @param {boolean} succeeded Whether the sudoku could be solved or not.
+ */
+function showResult(succeeded) {
+    const resultElem = document.getElementById('result');
+    resultElem.style.display = 'block';
+    resultElem.innerText = succeeded ? 'Solved!' : 'No solution.'
+    resultElem.classList.add(succeeded ? 'correct' : 'incorrect');
+}
+
+function clearResult() {
+    const resultElem = document.getElementById('result');
+    resultElem.classList.remove('correct', 'incorrect');
+    resultElem.style.display = 'none;'
+}
+
+// Add start function to click event
+document.getElementById('solve').addEventListener('click', async function() {
+    document.getElementById('solve').toggleAttribute('disabled');
+    const cellOptions = getAllCellOptions();
+    const result = await solveStep(cellOptions);
+    showResult(result);
+});

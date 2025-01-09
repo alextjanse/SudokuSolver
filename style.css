@@ -1,8 +1,20 @@
 body {
     font-family: Arial, Helvetica, sans-serif;
+    text-align: center;
+}
+
+h1 {
+    font-size: 64px;
+}
+
+footer {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
 }
 
 #sudoku {
+    margin: 20px auto;
     display: grid;
     grid-template-columns: repeat(3, auto);
     grid-template-rows: repeat(3, auto);
@@ -28,4 +40,21 @@ body {
 
 .given {
     background-color: gray;
+}
+
+#result {
+    border: 1px solid black;
+    display: none;
+    width: min-content;
+    padding: 10px 20px;
+    margin: 20px auto;
+    color: white;
+}
+
+#result.correct {
+    background-color: green;
+}
+
+#result.incorrect {
+    background-color: red;
 }
