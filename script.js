@@ -331,7 +331,7 @@ async function solveStep(cellOptions) {
         setValue(x, y, value);
         const changes = updateOptions(cellOptions, x, y, value);
         // Set an await, so the DOM can update.
-        await new Promise(resolve => setTimeout(resolve, 10));
+        // await new Promise(resolve => setTimeout(resolve, 10));
 
         if (await solveStep(cellOptions)) {
             return true;
@@ -343,7 +343,7 @@ async function solveStep(cellOptions) {
 
     // All options incorrect. Reset the value of the cell.
     setValue(x, y, '');
-    await new Promise(resolve => setTimeout(resolve, 10));
+    // await new Promise(resolve => setTimeout(resolve, 10));
 
     // Set the cell options back in the Map
     cellOptions.set(cellKey, options)
@@ -381,6 +381,9 @@ function showResult(succeeded) {
     resultElem.classList.add(succeeded ? 'correct' : 'incorrect');
 }
 
+/**
+ * Clear the result box.
+ */
 function clearResult() {
     const resultElem = document.getElementById('result');
     resultElem.classList.remove('correct', 'incorrect');
